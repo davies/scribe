@@ -133,13 +133,13 @@ bool ZKClient::registerTask() {
       index = zkRegistrationPrefix.find("/", index+1);
       string prefix = zkRegistrationPrefix.substr(0, index);
       zoo_create(zh, prefix.c_str(), contents.c_str(), contents.length(),
-          &ZOO_CREATOR_ALL_ACL, 0, tmp, sizeof(tmp));
+          &ZOO_OPEN_ACL_UNSAFE, 0, tmp, sizeof(tmp));
     }
   }
 
   // Register this scribe as an ephemeral node.
   int ret = zoo_create(zh, zkFullRegistrationName.c_str(), contents.c_str(),
-      contents.length(), &ZOO_CREATOR_ALL_ACL,
+      contents.length(), &ZOO_OPEN_ACL_UNSAFE,
       ZOO_EPHEMERAL, tmp, sizeof(tmp));
 
   if (ZOK == ret) {
@@ -167,7 +167,7 @@ bool ZKClient::updateStatus(std::string& current_status) {
                 current_status.length() + 1, -1);
   } else {
     rc = zoo_create(zh, zkFullRegistrationName.c_str(), current_status.c_str(),
-                    current_status.length() + 1, &ZOO_CREATOR_ALL_ACL,
+                    current_status.length() + 1, &ZOO_OPEN_ACL_UNSAFE,
                     ZOO_EPHEMERAL, tmp, sizeof(tmp));
   }
   if (rc) {
