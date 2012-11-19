@@ -145,15 +145,16 @@ bool ZKClient::registerTask() {
   if (ZOK == ret) {
     return true;
   } else if (ZNODEEXISTS == ret) {
-    if (ZOK == zoo_exists(zh, zkFullRegistrationName.c_str(), 1, &stat)) {
+    if (ZOK == (ret=zoo_exists(zh, zkFullRegistrationName.c_str(), 1, &stat))) {
       LOG_DEBUG("Set watch on znode that already exists: %s", zkFullRegistrationName.c_str());
       return true;
     } else {
-      LOG_OPER("Failed setting watch on znode: %s", zkFullRegistrationName.c_str());
+      LOG_OPER("Failed setting watch on znode: %s %s", zkFullRegistrationName.c_str(), zerror(ret));
       return false;
     }
   }
-  LOG_OPER("Registration failed for unknown reason: %s", zkFullRegistrationName.c_str());
+  LOG_OPER("Registration failed for unknown reason: %s %s", zkFullRegistrationName.c_str(),
+        zerror(ret));
   return false;
 }
 
@@ -170,7 +171,8 @@ bool ZKClient::updateStatus(std::string& current_status) {
                     ZOO_EPHEMERAL, tmp, sizeof(tmp));
   }
   if (rc) {
-    LOG_OPER("Error %d for writing %s to ZK file %s", rc, current_status.c_str(), zkFullRegistrationName.c_str());
+    LOG_OPER("Error %s(%d) for writing %s to ZK file %s", zerror(rc), rc, 
+        current_status.c_str(), zkFullRegistrationName.c_str());
   } else {
     LOG_DEBUG("Write %s to ZK file %s", current_status.c_str(), zkFullRegistrationName.c_str());
   }
