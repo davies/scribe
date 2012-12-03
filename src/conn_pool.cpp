@@ -276,16 +276,25 @@ bool scribeConn::open() {
 #ifdef USE_ZOOKEEPER
     if (0 == zkRegistrationZnode.find("zk://")) {
       Url regUrl(zkRegistrationZnode);
-      if (!regUrl.parseSuccessful()) {
-        LOG_OPER("Failed to parse zookeeper registration url %s", zkRegistrationZnode.c_str());
+      std::string zkHost, zkPath;
+      if (regUrl.parseSuccessful()) {
+        zkHost = regUrl.getHost() + ":" + lexical_cast<string>(regUrl.getPort());
+        zkPath = regUrl.getFile();
       } else {
+        //LOG_OPER("Failed to parse zookeeper registration url %s", zkRegistrationZnode.c_str());
+        if (!config.getString("zk_server", zkHost)) {
+          LOG_OPER("Failed to get zk_server in config");
+          zkHost.clear();
+        }
+        zkPath = zkRegistrationZnode.substr(5, string::npos);
+      }
+      if (!zkHost.empty() && !zkPath.empty()) {
         ZKClient zkClient;
-        std::string zkHost = regUrl.getHost() + ":" + lexical_cast<string>(regUrl.getPort());
         LOG_OPER("[zk] Connecting to %s", zkHost.c_str());
         if (!zkClient.connect(zkHost, "", g_Handler->port)) {
           LOG_OPER("Failed to open connection to zookeeper server %s", zkHost.c_str());
         } else {
-          if (zkClient.getRemoteScribe(regUrl.getFile(), remoteHost, remotePort)) {
+          if (zkClient.getRemoteScribe(zkPath, remoteHost, remotePort)) {
             LOG_OPER("Got remote scribe <%s:%lu> from <%s>",
                 remoteHost.c_str(), remotePort, zkRegistrationZnode.c_str());
           } else {
